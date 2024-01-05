@@ -6,7 +6,9 @@ import os
 import random
 import sys
 
-os.chdir(os.path.dirname(os.path.abspath(__file__)))
+src_dir = os.path.dirname(os.path.abspath(__file__))
+os.chdir(src_dir)
+import git
 import numpy as np
 from poisson_iti import poisson_iti
 import psychopy
@@ -277,6 +279,12 @@ data_file.write("# Experimenter : " + info_dic["Experimenter"] + "\n")
 data_file.write("# Task : " + info_dic["Task"] + "\n")
 data_file.write("# Mode : " + info_dic["Mode"] + "\n")
 data_file.write("# Date : " + info_dic["Date"] + "\n")
+try:
+    repo = git.Repo(src_dir)
+    sha = repo.head.object.hexsha
+except:
+    sha = "n/a"
+data_file.write("# Git Commit Hash : " + sha + "\n")
 if info_dic["Task"] == "wsct":
     data_file.write("Scan,Scan.Start,Trial,Word,Onset,End,Key.List,Key.Bool\n")
 else:
