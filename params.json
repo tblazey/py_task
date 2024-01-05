@@ -1,0 +1,82 @@
+{
+    "units": "deg",
+    "record": false,
+    "record_test": true,
+    "debug": false,
+    "wrap_width": 16,
+    "button_color": "red",
+    "font_size": {
+        "stem": 1,
+        "update": 1,
+        "fix": 2.5,
+        "default": 0.7
+    },
+    "keys": {
+        "trig": "t",
+        "exit": "escape",
+      "button": "r"
+    },
+    "monitor": {
+        "task": {
+            "width": 28.5,
+            "distance": 70,
+            "id": 1,
+            "full_screen": false
+        },
+        "con": {
+            "width": 28.5,
+            "distance": 70,
+            "id": 0,
+            "full_screen": false
+        }
+    },
+    "task": {
+        "wsct":{
+            "shuffle_stems": true,
+            "lists": {
+                "experiment": "task_stem_list.txt",
+                "post_test": "post_stem_list.txt",
+                "practice": "practice_stem_list.txt"
+            },
+            "trials_per_scan": {
+                "experiment": [56, 260, 56],
+                "bold_bool": [true, false, true],
+                "practice": [10],
+                "post_test": [50]
+            },
+            "times": {
+                "iti": "variable",
+                "ti": 1.5,
+                "fix": 10,
+                "min": 2,
+                "max": 6.5,
+                "mean": 3.5,
+                "test_fix": 2
+            }
+        },
+        "vismotor":{
+            "check": {
+                "ang_cyc": 20,
+                "rad_cyc": 6,
+                "ang_res": 1080,
+                "tex_res": 64,
+                "size": 10,
+                "ori_off": 6
+            },
+            "trials_per_scan": {
+                "experiment": [71, 324, 71],
+                "bold_bool": [true, false, true],
+                "practice": [10]
+            },
+            "times": {
+                "iti": "variable",
+                "ti": 1.5,
+                "fix": 10,
+                "min": 1.5,
+                "max": 5.5,
+                "mean": 2.5,
+                "test_fix": 2
+            }
+        }
+    }
+}
