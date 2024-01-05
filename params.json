@@ -64,7 +64,7 @@
                 "ori_off": 6
             },
             "trials_per_scan": {
-                "experiment": [71, 324, 71],
+                "experiment": [70, 324, 70],
                 "bold_bool": [true, false, true],
                 "practice": [10]
             },
