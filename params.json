@@ -39,10 +39,10 @@
                 "practice": "practice_stem_list.txt"
             },
             "trials_per_scan": {
-                "experiment": [56, 260, 56],
+                "experiment": [56, 264, 56],
                 "bold_bool": [true, false, true],
                 "practice": [10],
-                "post_test": [50]
+                "post_test": [200]
             },
             "times": {
                 "iti": "variable",
@@ -64,7 +64,7 @@
                 "ori_off": 6
             },
             "trials_per_scan": {
-                "experiment": [70, 324, 70],
+                "experiment": [70, 328, 70],
                 "bold_bool": [true, false, true],
                 "practice": [10]
             },
