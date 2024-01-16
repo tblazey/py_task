@@ -286,9 +286,9 @@ except:
     sha = "n/a"
 data_file.write("# Git Commit Hash : " + sha + "\n")
 if info_dic["Task"] == "wsct":
-    data_file.write("Scan,Scan.Start,Trial,Word,Onset,End,Key.List,Key.Bool\n")
+    data_file.write("Scan,Scan.Start,Trial,Word,End,End,Key.List,Key.Bool,Rec.Start\n")
 else:
-    data_file.write("Scan,Scan.Start,Trial,Onset,End,Key.List,Key.Bool\n")
+    data_file.write("Scan,Scan.Start,Trial,End,End,Key.List,Key.Bool\n")
 data_file.close()
 
 # Fixation stimulus
@@ -578,7 +578,10 @@ for scan in range(n_scan):
             # Start recording if necessary
             if record is True:
                 mic.start()
-
+                rec_start = round(clock.getTime(), 6)
+            else:
+                rec_start = "N/A"
+                
         # Wait for trial period to end
         wait_timer(timer, params["keys"]["exit"], clock=clock, invert=task_invert)
         for stim in task_stim:
@@ -650,6 +653,7 @@ for scan in range(n_scan):
                     round(end_time, 6),
                     key_list,
                     key_bool,
+                    rec_start
                 ]
             )
         else:
