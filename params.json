@@ -39,7 +39,7 @@
                 "practice": "practice_stem_list.txt"
             },
             "trials_per_scan": {
-                "experiment": [56, 264, 56],
+                "experiment": [56, 276, 56],
                 "bold_bool": [true, false, true],
                 "practice": [10],
                 "post_test": [200]
