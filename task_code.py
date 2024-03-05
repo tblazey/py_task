@@ -699,6 +699,7 @@ for scan in range(n_scan):
     if fix_time > 0 and task_params["trials_per_scan"]["bold_bool"][scan] is True:
         show_stim([fix_stim], fix_time)
         wait_timer(timer, params["keys"]["exit"], exit=True)
+        fix_stim.autoDraw = False
 
     # Update indicies for saving data
     scan_start = trial_idx
