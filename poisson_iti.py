@@ -42,6 +42,13 @@ def get_args():
         "-tr",
         help="Frame duration (s). If specified output will include rounded frame indicators",
     )
+    parser.add_argument(
+        "-tol",
+        default=0.01,
+        type=float,
+        help="Acceptable difference between requested iti limits and optimized ones"
+             "Default is 0.01"
+    )
     return parser.parse_args()
 
 
@@ -49,7 +56,7 @@ def get_args():
 def cost(x, y, bins, pdf):
     hat = x + y
     dens, _ = np.histogram(hat, bins=bins, density=True)
-    return np.sum(np.power(pdf - dens, 2))
+    return np.nansum(np.power(pdf - dens, 2))
 
 
 # Function defining nonlinear constraints
@@ -61,9 +68,12 @@ def nlc_wrap(y):
     return nl_func
 
 
-def poisson_iti(n_trial, min_iti, mean_iti, max_iti, n_bin=12, delay=0, tr=None):
+def poisson_iti(
+    n_trial, min_iti, mean_iti, max_iti, n_bin=12, delay=0, tr=None, tol=0.01
+):
     """
-    Generates inter-trial intervals and timings according to an approximate poisson process
+    Generates inter-trial intervals and timings according to an approximate poisson
+    process
 
     Parameters
     ----------
@@ -81,12 +91,15 @@ def poisson_iti(n_trial, min_iti, mean_iti, max_iti, n_bin=12, delay=0, tr=None)
        Delay before starting trials (s)
     tr : float
        Time between frames (s)
+    tol : float
+        Acceptable difference between optimized time intervals and requested constraints
 
     Returns
     -------
     iti : array
-       Array of shape n_trial with inter-trial intervals that approximate a poisson process.
-       Values have a minimum of min_iti, a maximum of max_iti, and a mean of mean_iti.
+       Array of shape n_trial with inter-trial intervals that approximate a
+       poisson process. Values have a minimum of min_iti, a maximum of max_iti, and a
+       mean of mean_iti.
     t : array
        Array of trial start times
     ifi : array
@@ -101,34 +114,47 @@ def poisson_iti(n_trial, min_iti, mean_iti, max_iti, n_bin=12, delay=0, tr=None)
     exp_lmbda = mean_iti - min_iti
     exp_sum = n_trial * exp_lmbda
     exp_mean = 1 / exp_lmbda
+    
+    while True:
 
-    # Generate initial itis
-    iti = np.random.exponential(exp_lmbda, n_trial)
-    iti[iti > exp_max] = exp_max
+        # Generate initial itis
+        iti = np.random.exponential(exp_lmbda, n_trial)
+        iti[iti > exp_max] = exp_max
 
-    # Compute simulated and expected pdf given input parameters
-    dens, bins = np.histogram(iti, bins=n_bin, density=True)
-    delta_bin = bins[1] - bins[0]
-    pdf = (
-        np.exp(-exp_mean * bins) - np.exp(-exp_mean * (bins + delta_bin))
-    ) / delta_bin
+        # Compute simulated and expected pdf given input parameters
+        dens, bins = np.histogram(iti, bins=n_bin, density=True)
+        delta_bin = bins[1] - bins[0]
+        pdf = (
+            np.exp(-exp_mean * bins) - np.exp(-exp_mean * (bins + delta_bin))
+        ) / delta_bin
 
-    # Define constraints (linear is trial duration, nonlinear is minimum  and maximum iti)
-    exp_diff = exp_sum - np.sum(iti)
-    sum_con = opt.LinearConstraint(np.ones((1, n_trial)), lb=exp_diff, ub=exp_diff)
-    range_con = opt.NonlinearConstraint(
-        nlc_wrap(iti), lb=[exp_min, exp_max], ub=[exp_min, exp_max]
-    )
+        # Define constraints (linear is trial duration, nonlinear is minimum  and maximum iti)
+        exp_diff = exp_sum - np.sum(iti)
+        sum_con = opt.LinearConstraint(np.ones((1, n_trial)), lb=exp_diff, ub=exp_diff)
+        range_con = opt.NonlinearConstraint(
+            nlc_wrap(iti), lb=[exp_min, exp_max], ub=[exp_min, exp_max]
+        )
 
-    # Adjust itis to fit constraints
-    init = np.ones(n_trial) * exp_diff / n_trial
-    fit = opt.minimize(
-        cost, init, args=(iti, bins, pdf[0:-1]), constraints=[sum_con, range_con]
-    )
-
-    # Generate timings for output
-    iti_hat = iti + fit.x + min_iti
-    dur_hat = np.cumsum(iti_hat) + delay
+        # Adjust init to fit average constraint
+        init = np.ones(n_trial) * exp_diff / n_trial
+        fit = opt.minimize(
+            cost, init, args=(iti, bins, pdf[0:-1]), constraints=[sum_con, range_con]
+        )
+        
+        # Generate timings for output
+        iti_hat = iti + fit.x + min_iti
+        dur_hat = np.cumsum(iti_hat) + delay
+        
+        """
+        Make sure optimization succeeded. If not, rerun.
+        This is a horrible hack, but is necessary until I can figure out
+        why the constraints are violated. My current guess is that is due to the fact
+        that the initial guess does not meet the min/max constraints.
+        """
+        fit_cons = [np.min(iti_hat), np.mean(iti_hat), np.max(iti_hat)]
+        cons = [min_iti, mean_iti, max_iti]
+        if np.allclose(fit_cons, cons, atol=tol):
+            break
 
     if tr is None:
         return iti_hat, dur_hat
@@ -148,6 +174,7 @@ def main():
         n_bin=args.bins,
         delay=args.delay,
         tr=args.tr,
+        tol=args.tol
     )
 
     # Write output
