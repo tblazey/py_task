@@ -3,3 +3,4 @@
 data/*.tsv
 data/*.csv
 audio/*.wav
+*.pyc

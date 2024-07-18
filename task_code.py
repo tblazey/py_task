@@ -140,7 +140,7 @@ dlg = gui.Dlg(title="WSCT")
 dlg.addField("Participant:")
 dlg.addField("Experimenter:")
 dlg.addField("Task:", choices=["WSCT", "VISMOTOR"])
-dlg.addField("Mode:", choices=["Experiment", "Practice", "Post Test"])
+dlg.addField("Mode:", choices=["Experiment", "SAR Experiment", "Practice", "Post Test"])
 dlg_data = dlg.show()
 
 # Run dialog box
@@ -181,8 +181,9 @@ data_path = os.path.join("data/", out_root + "_data.csv")
 iti_path = os.path.join("data/", out_root + "_iti.csv")
 
 # Setup instructions
+exp_modes = ["experiment", "sar_experiment"]
 if info_dic["Task"] == "wsct":
-    if info_dic["Mode"] == "experiment":
+    if info_dic["Mode"] in exp_modes:
         instructions = ["The task will begin when you see a white crosshair."]
         final_msg = (
             "The task is now over. Please remain still while additional"
@@ -219,7 +220,7 @@ if info_dic["Task"] == "wsct":
         final_msg = "The post-test session is complete.\n\n" + "Thank you!"
         img_idx = None
 else:
-    if info_dic["Mode"] == "experiment":
+    if info_dic["Mode"] in exp_modes:
         instructions = ["The task will begin when you see a white crosshair."]
         final_msg = (
             "The task is now over. Please remain still while additional"
@@ -528,14 +529,14 @@ for scan in range(n_scan):
 
     # Add text to second screen
     if n_screen == 2:
-        if info_dic["Mode"] != "experiment":
+        if info_dic["Mode"] not in exp_modes:
             start_text.setText("Press space to start practice")
         start_text.draw()
         win_2.flip()
 
     # Wait for trigger before doing anything
     if info_dic["Mode"] != "post_test":
-        if info_dic["Mode"] != "experiment":
+        if info_dic["Mode"] not in exp_modes:
             trig_key = "space"
         else:
             trig_key = params["keys"]["trig"]
