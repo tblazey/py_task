@@ -10,9 +10,9 @@
         "default": 0.7
     },
     "keys": {
-        "trig": "t",
+        "trig": "5",
         "exit": "escape",
-      "button": "r"
+      "button": "4"
     },
     "monitor": {
         "task": {
