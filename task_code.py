@@ -10,8 +10,6 @@ os.chdir(src_dir)
 import git
 import numpy as np
 from poisson_iti import poisson_iti
-import psychopy
-
 from psychopy import visual, event, core, gui, data, monitors
 import pyglet
 
@@ -459,7 +457,7 @@ for scan in range(n_scan):
             win_2.flip()
         wait_timer(timer, params["keys"]["exit"], exit=True, clock=clock)
         trig_list.extend([key[1] for key in key_list if key[0] == params["keys"]["trig"]])
-        fix_stim.autoDraw = False
+    fix_stim.autoDraw = False
 
     # Loop through number of trials per scan
     for trial in range(n_trial_scan[scan]):
