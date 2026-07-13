@@ -1,7 +1,5 @@
 {
     "units": "deg",
-    "record": false,
-    "record_test": true,
     "debug": false,
     "wrap_width": 16,
     "button_color": "red",
@@ -35,16 +33,12 @@
             "shuffle_stems": true,
             "lists": {
                 "experiment": "task_stem_list.txt",
-                "sar_experiment": "sar_task_stem_list.txt",
-                "post_test": "post_stem_list.txt",
                 "practice": "practice_stem_list.txt"
             },
             "trials_per_scan": {
-                "experiment": [56, 276, 56],
-                "bold_bool": [true, false, true],
-                "sar_experiment": [56, 296, 56],
-                "practice": [10],
-                "post_test": [200]
+                "experiment": [55, 54, 95, 55, 54, 95],
+                "bold_bool": [true, false, false, true, false, false],
+                "practice": [10]
             },
             "times": {
                 "iti": "variable",
@@ -53,31 +47,6 @@
                 "min": 2,
                 "max": 6.5,
                 "mean": 3.5,
-                "test_fix": 2
-            }
-        },
-        "vismotor":{
-            "check": {
-                "ang_cyc": 20,
-                "rad_cyc": 6,
-                "ang_res": 1080,
-                "tex_res": 64,
-                "size": 10,
-                "ori_off": 6
-            },
-            "trials_per_scan": {
-                "experiment": [70, 345, 70],
-                "sar_experiment": [70, 368, 70],
-                "bold_bool": [true, false, true],
-                "practice": [10]
-            },
-            "times": {
-                "iti": "variable",
-                "ti": 1.5,
-                "fix": 10,
-                "min": 1.5,
-                "max": 5.5,
-                "mean": 2.5,
                 "test_fix": 2
             }
         }

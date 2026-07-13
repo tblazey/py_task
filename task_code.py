@@ -4,7 +4,6 @@
 import json
 import os
 import random
-import sys
 
 src_dir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(src_dir)
@@ -13,9 +12,7 @@ import numpy as np
 from poisson_iti import poisson_iti
 import psychopy
 
-psychopy.prefs.hardware["audioLib"] = ["ptb", "pyo", "pygame", "sounddevice"]
 from psychopy import visual, event, core, gui, data, monitors
-from psychopy.sound import Microphone
 import pyglet
 
 # Function to display stimulus text
@@ -85,9 +82,8 @@ def wait_trig(n_trig, trig_key, exit_key):
         elif exit_key in all_keys:
             core.quit()
 
-
 # Function that waits until timer goes below zero.
-def wait_timer(timer, exit_key, clock=False, exit=False, refresh_rate=8, invert=False):
+def wait_timer(timer, exit_key, clock=False, exit=False, refresh_rate=8):
     global exp_exit
     global key_list
     refresh_timer.reset(0)
@@ -113,11 +109,6 @@ def wait_timer(timer, exit_key, clock=False, exit=False, refresh_rate=8, invert=
         while refresh_timer.getTime() > 0:
             pass
 
-        # Invert checkboard so it flashes
-        if invert is True and check_stim.autoDraw is True:
-            check_stim.contrast *= -1
-
-
 # Function to create monitor object
 def create_monitor(mon_id, params, screen):
     mon = monitors.Monitor(
@@ -139,8 +130,7 @@ with open("params.json", "r") as fid:
 dlg = gui.Dlg(title="WSCT")
 dlg.addField("Participant:")
 dlg.addField("Experimenter:")
-dlg.addField("Task:", choices=["WSCT", "VISMOTOR"])
-dlg.addField("Mode:", choices=["Experiment", "SAR Experiment", "Practice", "Post Test"])
+dlg.addField("Mode:", choices=["Experiment", "Practice"])
 dlg_data = dlg.show()
 
 # Run dialog box
@@ -148,24 +138,13 @@ if dlg.OK:
     info_dic = {
         "Participant": dlg_data[0],
         "Experimenter": dlg_data[1],
-        "Task": dlg_data[2],
-        "Mode": dlg_data[3],
+        "Task": 'wsct',
+        "Mode": dlg_data[2],
         "Date": data.getDateStr(),
     }
-    info_dic["Task"] = info_dic["Task"].lower()
     info_dic["Mode"] = info_dic["Mode"].lower().replace(" ", "_")
 else:
     core.quit()
-
-# Recording logic
-if (params["record"] is True and info_dic["Mode"] != "post_test") or (
-    params["record_test"] is True and info_dic["Mode"] == "post_test"
-):
-    record = True
-else:
-    record = False
-if record is True:
-    mic = Microphone(device=0, streamBufferSecs=60, maxRecordingSize=175e3)
 
 # Define data file names
 out_root = (
@@ -179,72 +158,38 @@ out_root = (
 )
 data_path = os.path.join("data/", out_root + "_data.csv")
 iti_path = os.path.join("data/", out_root + "_iti.csv")
+trig_path = os.path.join("data/", out_root + "_triggers.csv")
 
 # Setup instructions
-exp_modes = ["experiment", "sar_experiment"]
-if info_dic["Task"] == "wsct":
-    if info_dic["Mode"] in exp_modes:
-        instructions = ["The task will begin when you see a white crosshair."]
-        final_msg = (
-            "The task is now over. Please remain still while additional"
-            + " scans are completed.\n\nThank you!"
-        )
-        img_idx = None
-    elif info_dic["Mode"] == "practice":
-        instructions = [
-            "Welcome to the word-stem completion practice!\n\n"
-            "You will be presented with a three letter word stem and "
-            "asked to think of a word that completes it.\n\n"
-            "Please do not speak the word out loud.",
-            "For example, if you are shown HOU, you could think of "
-            "'HOUSE', 'HOUR', or 'HOUND'.",
-            "As you think of the word, please press the "
-            f"{params['button_color']} button on the controller.\n\n"
-            "Before we continue, could you press the "
-            f"{params['button_color']} button?",
-            "If you cannot think of an appropriate word, simply wait "
-            "for the next one.\n\nPractice will begin when you see "
-            "a white crosshair.",
-        ]
-        final_msg = (
-            "The practice session is over.\n\n" + "Do you need additional practice?"
-        )
-        img_idx = 2
-    else:
-        instructions = [
-            "Welcome to the word-stem completion post-test.\n\n"
-            "You will be shown a series of word stems and asked to "
-            "speak out loud a word that completes each stem.\n\n"
-            "Please press space when you are ready to start"
-        ]
-        final_msg = "The post-test session is complete.\n\n" + "Thank you!"
-        img_idx = None
+if info_dic["Mode"] == 'experiment':
+    instructions = ["The task will begin when you see a white crosshair."]
+    final_msg = (
+        "The task is now over. Please remain still while additional"
+        + " scans are completed.\n\nThank you!"
+    )
+    img_idx = None
+elif info_dic["Mode"] == "practice":
+    instructions = [
+        "Welcome to the word-stem completion practice!\n\n"
+        "You will be presented with a three letter word stem and "
+        "asked to think of a word that completes it.\n\n"
+        "Please do not speak the word out loud.",
+        "For example, if you are shown HOU, you could think of "
+        "'HOUSE', 'HOUR', or 'HOUND'.",
+        "As you think of the word, please press the "
+        f"{params['button_color']} button on the controller.\n\n"
+        "Before we continue, could you press the "
+        f"{params['button_color']} button?",
+        "If you cannot think of an appropriate word, simply wait "
+        "for the next one.\n\nPractice will begin when you see "
+        "a white crosshair.",
+    ]
+    final_msg = (
+        "The practice session is over.\n\n" + "Do you need additional practice?"
+    )
+    img_idx = 2
 else:
-    if info_dic["Mode"] in exp_modes:
-        instructions = ["The task will begin when you see a white crosshair."]
-        final_msg = (
-            "The task is now over. Please remain still while additional"
-            + " scans are completed.\n\nThank you!"
-        )
-        img_idx = None
-    elif info_dic["Mode"] == "practice":
-        instructions = [
-            "Welcome to the task practice session!\n\nYou "
-            "will be presented with a flashing circular "
-            "checkerboard.",
-            "When you see the checkerboard please press the "
-            f"{params['button_color']} button on the "
-            "controller.\n\nBefore we continue, could you press "
-            f"the {params['button_color']} button?",
-            "Practice will begin when you see a white crosshair.",
-        ]
-        final_msg = (
-            "The practice session is over.\n\n" + "Do you need additional practice?"
-        )
-        img_idx = 1
-    else:
-        print("Post test is not an option for visual motor task")
-        sys.exit()
+    raise RuntimeError(f"Unknown mode: {info_dic['Mode']}")
 
 # Get monitor information
 display = pyglet.canvas.get_display()
@@ -280,16 +225,14 @@ data_file.write("# Experimenter : " + info_dic["Experimenter"] + "\n")
 data_file.write("# Task : " + info_dic["Task"] + "\n")
 data_file.write("# Mode : " + info_dic["Mode"] + "\n")
 data_file.write("# Date : " + info_dic["Date"] + "\n")
+open(trig_path, "w").close()
 try:
     repo = git.Repo(src_dir)
     sha = repo.head.object.hexsha
 except:
     sha = "n/a"
 data_file.write("# Git Commit Hash : " + sha + "\n")
-if info_dic["Task"] == "wsct":
-    data_file.write("Scan,Scan.Start,Trial,Word,Onset,End,Key.List,Key.Bool,Rec.Start\n")
-else:
-    data_file.write("Scan,Scan.Start,Trial,Onset,End,Key.List,Key.Bool\n")
+data_file.write("Scan,Scan.Start,Trial,Word,Onset,End,Key.List,Key.Bool\n")
 data_file.close()
 
 # Fixation stimulus
@@ -306,74 +249,33 @@ fix_stim = visual.TextStim(
     units=params["units"],
     height=params["font_size"]["fix"],
 )
-if info_dic["Mode"] == "post_test" or info_dic["Mode"] == "practice":
+if info_dic["Mode"] == "practice":
     fix_time = task_params["times"]["test_fix"]
 else:
     fix_time = task_params["times"]["fix"]
 
-# Task specific prep
-if info_dic["Task"] == "wsct":
-    # Load in list and remove new lines
-    stem_path = task_params["lists"][info_dic["Mode"]]
-    with open(stem_path) as fid:
-        stem_list = fid.readlines()
-    stem_list = [stem.strip() for stem in stem_list]
 
-    # Shuffle list if neccessary
-    if params["task"]["wsct"]["shuffle_stems"] is True:
-        random.shuffle(stem_list)
+# Load in stem list and remove new lines
+stem_path = task_params["lists"][info_dic["Mode"]]
+with open(stem_path) as fid:
+    stem_list = fid.readlines()
+stem_list = [stem.strip() for stem in stem_list]
 
-    # Create text stimulus for wordstem
-    stem_stim = visual.TextStim(
-        win_1,
-        pos=(0, 0),
-        color="white",
-        units=params["units"],
-        text="Initial Text",
-        height=params["font_size"]["stem"],
-        wrapWidth=params["wrap_width"],
-    )
-    task_stim = [stem_stim]
-    task_invert = False
+# Shuffle list if neccessary
+if params["task"]["wsct"]["shuffle_stems"] is True:
+    random.shuffle(stem_list)
 
-else:
-    # Create checkerboard stimulus
-    check_params = params["task"]["vismotor"]["check"]
-    check_stim = visual.RadialStim(
-        win_1,
-        pos=[0, 0],
-        tex="sqrXsqr",
-        ori=0,
-        interpolate=True,
-        color=1,
-        units=params["units"],
-        radialCycles=check_params["rad_cyc"],
-        angularCycles=check_params["ang_cyc"],
-        angularRes=check_params["ang_res"],
-        texRes=check_params["tex_res"],
-        size=check_params["size"],
-    )
-
-    # Remove center portion of checkerboard stimulus
-    center_stim = visual.Polygon(
-        win=win_1,
-        edges=600,
-        size=[2, 2],
-        ori=0,
-        pos=[0, 0],
-        lineWidth=0,
-        lineColor=[1, 1, 1],
-        lineColorSpace="rgb",
-        fillColor="black",
-        fillColorSpace="rgb",
-        opacity=1,
-        depth=-4.0,
-        interpolate=True,
-        units=params["units"],
-    )
-    task_stim = [check_stim, center_stim, fix_stim]
-    task_text = None
-    task_invert = True
+# Create text stimulus for wordstem
+stem_stim = visual.TextStim(
+    win_1,
+    pos=(0, 0),
+    color="white",
+    units=params["units"],
+    text="Initial Text",
+    height=params["font_size"]["stem"],
+    wrapWidth=params["wrap_width"],
+)
+task_stim = [stem_stim]
 
 # Common text stimului
 count_text = visual.TextStim(
@@ -432,7 +334,7 @@ elif params["button_color"] == "yellow":
 elif params["button_color"] == "blue":
     circle_pos = (-0.105, -0.605)
 else:
-    raise ValueError("Unknown button color: " + _)
+    raise ValueError(f"Unknown button color: {params['button_color']}")
 circle_stim = visual.Circle(
     win_1,
     radius=0.03,
@@ -526,45 +428,47 @@ exp_exit = False
 for scan in range(n_scan):
     # Tell control room to start scan
     n_resp_scan = 0
+    trig_list = []
 
     # Add text to second screen
     if n_screen == 2:
-        if info_dic["Mode"] not in exp_modes:
+        if info_dic["Mode"] != 'experiment':
             start_text.setText("Press space to start practice")
         start_text.draw()
         win_2.flip()
 
-    # Wait for trigger before doing anything
-    if info_dic["Mode"] != "post_test":
-        if info_dic["Mode"] not in exp_modes:
-            trig_key = "space"
-        else:
-            trig_key = params["keys"]["trig"]
-        wait_trig(1, trig_key, params["keys"]["exit"])
-
+    # Wait for correct trigger
+    if info_dic["Mode"] != 'experiment':
+        trig_key = "space"
+    else:
+        trig_key = params["keys"]["trig"]
+    wait_trig(1, trig_key, params["keys"]["exit"])
+   
     # Reset time
     timer.reset(0)
     if scan == 0:
         clock.reset()
     scan_start_time = clock.getTime()
+    trig_list.append(scan_start_time)
 
     # Show cursor
     if fix_time > 0 and task_params["trials_per_scan"]["bold_bool"][scan] is True:
+        key_list = []
         show_stim([fix_stim], fix_time)
         if n_screen == 2:
             win_2.flip()
-        wait_timer(timer, params["keys"]["exit"], exit=True)
+        wait_timer(timer, params["keys"]["exit"], exit=True, clock=clock)
+        trig_list.extend([key[1] for key in key_list if key[0] == params["keys"]["trig"]])
         fix_stim.autoDraw = False
 
     # Loop through number of trials per scan
     for trial in range(n_trial_scan[scan]):
         key_list = []
-
+        
         # Show first trial
         if trial == 0:
             start_time = clock.getTime()
-            if info_dic["Task"] == "wsct":
-                task_text = stem_list[trial_idx]
+            task_text = stem_list[trial_idx]
             show_stim(
                 task_stim,
                 task_params["times"]["ti"],
@@ -576,15 +480,8 @@ for scan in range(n_scan):
             if n_screen == 2:
                 update_prog(0)
 
-            # Start recording if necessary
-            if record is True:
-                mic.start()
-                rec_start = round(clock.getTime(), 6)
-            else:
-                rec_start = "N/A"
-                
         # Wait for trial period to end
-        wait_timer(timer, params["keys"]["exit"], clock=clock, invert=task_invert)
+        wait_timer(timer, params["keys"]["exit"], clock=clock)
         for stim in task_stim:
             stim.autoDraw = False
         fix_stim.autoDraw = False
@@ -599,6 +496,7 @@ for scan in range(n_scan):
         trial_idx += 1
 
         # Get user input
+        trig_list.extend([key[1] for key in key_list if key[0] == params["keys"]["trig"]])
         key_list = [key for key in key_list if key[0] != params["keys"]["trig"]]
         resp_keys = [key[0] for key in key_list]
         key_bool = [key[0] == params["keys"]["button"] for key in key_list]
@@ -619,15 +517,14 @@ for scan in range(n_scan):
             # Wait for space bar to continue
             wait_trig(1, "space", params["keys"]["exit"])
 
-            # Removed time in apuse from timer
+            # Removed time in pause from timer
             pause_end = clock.getTime()
             timer.addTime(pause_end - pause_start)
         next_time = clock.getTime()
 
         # Start next trial
         if trial != n_trial_scan[scan] - 1 and skip is False:
-            if info_dic["Task"] == "wsct":
-                task_text = stem_list[trial_idx]
+            task_text = stem_list[trial_idx]
             show_stim(
                 task_stim,
                 task_params["times"]["ti"],
@@ -643,36 +540,21 @@ for scan in range(n_scan):
             show_stim([fix_stim], 0, show_count=params["debug"])
 
         # Save data from previous trial
-        if info_dic["Task"] == "wsct":
-            data_list.append(
-                [
-                    scan,
-                    round(scan_start_time, 6),
-                    trial_idx - 1,
-                    stem_list[trial_idx - 1],
-                    round(start_time, 6),
-                    round(end_time, 6),
-                    key_list,
-                    key_bool,
-                    rec_start
-                ]
-            )
-        else:
-            data_list.append(
-                [
-                    scan,
-                    round(scan_start_time, 6),
-                    trial_idx - 1,
-                    round(start_time, 6),
-                    round(end_time, 6),
-                    key_list,
-                    key_bool,
-                ]
-            )
+        data_list.append(
+            [
+                scan,
+                round(scan_start_time, 6),
+                trial_idx - 1,
+                stem_list[trial_idx - 1],
+                round(start_time, 6),
+                round(end_time, 6),
+                key_list,
+                key_bool
+            ]
+        )
+        
         if pause is False:
             start_time = next_time
-        if record is True:
-            mic.poll()
 
         # Exit scan block if necessary
         if skip is True:
@@ -682,26 +564,24 @@ for scan in range(n_scan):
         if exp_exit is True:
             break
 
-    # Save audio file if necessary
-    if record is True:
-        mic.stop()
-        audio_clip = mic.getRecording()
-        audio_path = os.path.join("audio/", out_root + "_" + str(scan) + ".wav")
-        audio_clip.save(audio_path)
-        mic.clear()
-
-    # Update data file
+    # Show cursor
+    if fix_time > 0 and task_params["trials_per_scan"]["bold_bool"][scan] is True:
+        key_list = []
+        show_stim([fix_stim], fix_time)
+        wait_timer(timer, params["keys"]["exit"], exit=True, clock=clock)
+        trig_list.extend([key[1] for key in key_list if key[0] == params["keys"]["trig"]])
+        fix_stim.autoDraw = False
+    
+    # Update data file and trigger file
     with open(data_path, "a") as data_file:
         for i in range(scan_start, trial_idx):
             out_str = ",".join([str(item) for item in data_list[i]]) + "\n"
             data_file.write(out_str)
-
-    # Show cursor
-    if fix_time > 0 and task_params["trials_per_scan"]["bold_bool"][scan] is True:
-        show_stim([fix_stim], fix_time)
-        wait_timer(timer, params["keys"]["exit"], exit=True)
-        fix_stim.autoDraw = False
-
+    with open(trig_path, "a") as trig_file:
+        for trig_time in trig_list:
+            trig_file.write(f"{trig_time:.6f}\n")
+    
+    
     # Update indicies for saving data
     scan_start = trial_idx
 
