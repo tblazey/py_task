@@ -554,7 +554,7 @@ for scan in range(n_scan):
         if n_screen == 2:
             win_2.flip()
         wait_timer(timer, params["keys"]["exit"], exit=True)
-        fix_stim.autoDraw = False
+    fix_stim.autoDraw = False
 
     # Loop through number of trials per scan
     for trial in range(n_trial_scan[scan]):
